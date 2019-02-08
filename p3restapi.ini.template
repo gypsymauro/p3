@@ -1,0 +1,25 @@
+
+[P3]
+console_log_level = WARNING
+file_log_level = DEBUG
+test = True
+
+certificate_test=certificato_test.pem
+private_key_test=privatekey_test.pem
+p3_uri_test = https://ws-t.pitre.tn.it/RestServices/RouteRestRequest
+
+certificate_production=certificato_produzione.pem
+private_key_production=privatekey_produzione.pem
+p3_uri_production = https://ws-p.pitre.tn.it/RestServices/RouteRestRequest
+
+code_adm=
+username_correspondents=
+username_protocols=
+
+rda_correspondents=
+rda_protocols=
+
+code_application=
+default_register=
+
+import_rubrica=
