@@ -129,15 +129,27 @@ class P3RESTAPI():
 
         
       
-    def GetDocument(self,id_doc, getfile=False):      
-        data  = {"IdDocument": id_doc , "GetFile": getfile}
+    def GetDocument(self,id_doc, getfile=False, withsignature="0"):      
+        data  = {"IdDocument": id_doc , "GetFile": getfile, "GetFileWithSignature" : withsignature}
 
-        print(data)
         ret = self.CallAction('GetDocument',data)
         
         logging.info("IdDocument: %s" % data['IdDocument'])
 
         return(ret)
+
+
+    def GetFileDocumentById(self, id_doc,signed=False):
+        data  = {"IdDocument": id_doc}
+        if signed:
+            data['VersionId']='SIGNED'
+
+        ret = self.CallAction('GetFileDocumentById',data, http_method='GET')
+        
+        logging.info("IdDocument: %s" % data['IdDocument'])
+
+        return(ret)
+            
     
     def EditDocument(self, document, register=None):
         if not register:
@@ -242,6 +254,36 @@ class P3RESTAPI():
 
         return(ret)
 
+
+    def GetActiveClassificationScheme(self):       
+        data = {}
+        ret = self.CallAction('GetActiveClassificationScheme',data,'GET')
+
+        return(ret)
+
+    def GetProject(self,project):
+        data = project
+        ret = self.CallAction('GetProject',data,'GET')
+        return(ret)
+
+    def AddDocInProject(self,project):
+        data = project
+
+        ret = self.CallAction('AddDocInProject',data,'POST')
+#        logging.info("Receiver: %s" % data["Receiver"])
+
+        return(ret)
+
+
+    def AddDocInProject(self,project):
+        data = project
+
+        ret = self.CallAction('AddDocInProject',data,'POST')
+#        logging.info("Receiver: %s" % data["Receiver"])
+
+        return(ret)
+    
+
     
         
 if __name__=="__main__":
@@ -255,6 +297,7 @@ if __name__=="__main__":
     
     test = [
         'getdocument',
+#        'getfiledocumentbyid',        
 #        'editdocument',
 #        'searchdocument'
 #        'createdocument',
@@ -262,11 +305,25 @@ if __name__=="__main__":
 #        'addcorrespondent',
 #        'getcorrespondent',        
 #        'searchcorrespondent',
-#        'executetransmission'
+#        'editcorrespondent',        
+#        'executetransmission',
+#        'getactiveclassificationscheme',
+#        'adddocinproject',
+#        'getproject'
     ]        
 
     if 'getdocument' in test:
-        print(api.GetDocument("79785989"))
+        #iddoc="79785989" # per il test
+        iddoc="232113992" #per produzione
+        
+        print(api.GetDocument(iddoc,True,"1"))
+
+    if 'getfiledocumentbyid' in test:
+        #iddoc="79785989" # per il test
+        iddoc="232113992" #per produzione
+        
+        print(api.GetFileDocumentById(iddoc, signed=True))
+        
 
     if 'searchdocument' in test:                        
         filter = {'Name':'OBJECT','Value':'Oggetto'}
@@ -325,32 +382,64 @@ if __name__=="__main__":
         
     if 'getcorrespondent' in test:                
 #        print(api.GetCorrespondent("79798886"))
-        print(api.GetCorrespondent("79812388"))
+        print(api.GetCorrespondent("79771801"))
 
 
     if 'addcorrespondent' in test:                        
         correspondent = {"Description": "string",
-                         "Code": "codice17",
+                         "Code": "codice20",
                          "Type": "U",
                          "CodeRegisterOrRF": "C_H330",
                          "CorrespondentType": "P",
-                         "PreferredChannel": "string",
-                         "Name": "string",
-                         "Surname": "string",
+                         "PreferredChannel": "MAIL",
+                         "Name": "Nome",
+                         "Surname": "Cognome",
                          "Email": "1234567890",                     
-                         "IsCommonAddress": True }
+                         "IsCommonAddress": False }
         
         print(api.AddCorrespondent(correspondent))
 
     if 'searchcorrespondent' in test:                        
-        filters = [{'Name':'OFFICES','Value':'TRUE'},
+        filters = [
+                   {'Name':'OFFICES','Value':'TRUE'},
+                   {'Name':'USERS','Value':'TRUE'},
+#                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
                    {'Name':'TYPE','Value':'GLOBAL'},
-                   {'Name':'DESCRIPTION','Value':'COMUNE DI RIVA'},
-                   {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'}]
+                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
+#                   {'Name':'CODE','Value':'codice18'},
+                   {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
+#                   {'Name':'EXACT_CODE','Value':'codice18'}
+                   ]
 
         # per ricercare direttamente dal codice rubrica esatto [{'Name':'EXACT_CODE','Value':corr['code']},        
         
         print(api.SearchCorrespondents(filters))
+
+    if 'editcorrespondent' in test:    
+        filters = [
+                   {'Name':'OFFICES','Value':'TRUE'},
+                   {'Name':'USERS','Value':'TRUE'},
+#                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
+                   {'Name':'TYPE','Value':'GLOBAL'},
+#                   {'Name':'DESCRIPTION','Value':'Cognome N'},
+#                   {'Name':'CODE','Value':'codice18'},
+                   {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
+                   {'Name':'EXACT_CODE','Value':'codice18****'}
+                   ]
+        
+        result=api.SearchCorrespondents(filters)
+        if not result['Correspondents']:
+            print("Nessun risultato")
+            quit()
+        print(result['Correspondents'][0]['Id'])
+
+        correspondent=api.GetCorrespondent(result['Correspondents'][0]['Id'])
+        print(correspondent)
+
+        correspondent['Name']="NuovoNome"
+        print(api.EditCorrespondent(correspondent))
+
+
 
     if 'executetransmission' in test:                                
         transmission = {"IdDocument": "79785964",
@@ -362,3 +451,36 @@ if __name__=="__main__":
         }
 
         print(api.ExecuteTransmissionDocument(transmission))
+
+    if 'getactiveclassificationscheme' in test:                
+        print(api.GetActiveClassificationScheme())
+
+    if 'getproject' in test:                                
+        project = {"ClassificationSchemeId": "79787618",
+                   "CodeProject": "2.1"
+        }
+
+        print(api.GetProject(project))
+
+
+    if 'adddocinproject' in test:                                
+        project = {
+#                   "IdDocument": "79834923",
+                   "IdDocument": "79832588",
+                   "CodeProject": "1"
+#                   "IdProject": "79787745"
+        }
+
+        print(api.AddDocInProject(project))
+
+    if 'adddocinprojectcomplete' in test:     
+        logging.info("ProtocolNumber: %s Object: %s" % (data['Document']['ProtocolNumber'], data['Document']['Object']))
+        idtitolario=api.GetActiveClassificationScheme()
+                           
+        project = {"IdDocument": "79834923",
+                   "IdProject": "79787745"
+        }
+
+        print(api.AddDocInProject(project))
+
+

@@ -1,0 +1,7 @@
+
+*.log
+*.pyc
+*.ini
+*~
+*.pem
+__pycache__
