@@ -113,15 +113,15 @@ class P3RESTAPI():
         if username == None:
             if self.config['P3'].getboolean('import_rubrica'):
                 user = self.config['P3']['username_correspondents']
-                data['CodeRole'] =  self.config['P3']['rda_correspondents']
+#                data['CodeRole'] =  self.config['P3']['rda_correspondents']
             else:
                 user = self.config['P3']['username_protocols']
-                data['CodeRole'] =  self.config['P3']['rda_protocols']
+#                data['CodeRole'] =  self.config['P3']['rda_protocols']
         else:
             user = username
 
         data['Username']=user
-                           
+        
         ret = self.CallAction('GetToken',data)
         logging.info("Username: %s" % data['Username'])
 
@@ -296,7 +296,7 @@ if __name__=="__main__":
      
     
     test = [
-        'getdocument',
+#        'getdocument',
 #        'getfiledocumentbyid',        
 #        'editdocument',
 #        'searchdocument'
@@ -304,7 +304,7 @@ if __name__=="__main__":
 #        'getmodifieddocuments',
 #        'addcorrespondent',
 #        'getcorrespondent',        
-#        'searchcorrespondent',
+        'searchcorrespondent',
 #        'editcorrespondent',        
 #        'executetransmission',
 #        'getactiveclassificationscheme',
@@ -314,13 +314,13 @@ if __name__=="__main__":
 
     if 'getdocument' in test:
         #iddoc="79785989" # per il test
-        iddoc="232113992" #per produzione
+        iddoc="230054419" #per produzione
         
         print(api.GetDocument(iddoc,True,"1"))
 
     if 'getfiledocumentbyid' in test:
         #iddoc="79785989" # per il test
-        iddoc="232113992" #per produzione
+        iddoc="230054419" #per produzione
         
         print(api.GetFileDocumentById(iddoc, signed=True))
         
@@ -389,7 +389,7 @@ if __name__=="__main__":
         correspondent = {"Description": "string",
                          "Code": "codice20",
                          "Type": "U",
-                         "CodeRegisterOrRF": "C_H330",
+#                         "CodeRegisterOrRF": "C_H330",
                          "CorrespondentType": "P",
                          "PreferredChannel": "MAIL",
                          "Name": "Nome",
@@ -403,12 +403,14 @@ if __name__=="__main__":
         filters = [
                    {'Name':'OFFICES','Value':'TRUE'},
                    {'Name':'USERS','Value':'TRUE'},
+                   {'Name':'ROLES','Value':'FALSE'},
 #                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'TYPE','Value':'GLOBAL'},
-                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
-#                   {'Name':'CODE','Value':'codice18'},
+                   {'Name':'COMMON_ADDRESSBOOK','Value':'FALSE'},
+                   {'Name':'TYPE','Value':'EXTERNAL'},
+#                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
+#                   {'Name':'CODE','Value':'205648'},
                    {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
-#                   {'Name':'EXACT_CODE','Value':'codice18'}
+                   {'Name':'EXACT_CODE','Value':'A313388'}
                    ]
 
         # per ricercare direttamente dal codice rubrica esatto [{'Name':'EXACT_CODE','Value':corr['code']},        
@@ -419,12 +421,12 @@ if __name__=="__main__":
         filters = [
                    {'Name':'OFFICES','Value':'TRUE'},
                    {'Name':'USERS','Value':'TRUE'},
-#                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'TYPE','Value':'GLOBAL'},
+                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
+                   {'Name':'TYPE','Value':'EXTERNAL'},
 #                   {'Name':'DESCRIPTION','Value':'Cognome N'},
 #                   {'Name':'CODE','Value':'codice18'},
                    {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
-                   {'Name':'EXACT_CODE','Value':'codice18****'}
+                   {'Name':'EXACT_CODE','Value':'P205648'}
                    ]
         
         result=api.SearchCorrespondents(filters)
