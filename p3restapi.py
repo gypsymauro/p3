@@ -14,6 +14,7 @@ import urllib.parse
 import logging
 import configparser
 
+
 class P3RESTAPI():
     def __init__(self):
 
@@ -25,11 +26,11 @@ class P3RESTAPI():
         self.session = requests.Session()        
 
         if self.config['P3'].getboolean('test'):
-            logging.warning('TEST environment')            
+            logging.info('TEST environment')            
             self.session.cert = (self.config['P3']['certificate_test'],self.config['P3']['private_key_test'])
             self.uri = self.config['P3']['p3_uri_test']
         else:
-            logging.warning('Production environment')
+            logging.info('Production environment')
             self.session.cert = (self.config['P3']['certificate_production'],self.config['P3']['private_key_production'])
             self.uri = self.config['P3']['p3_uri_production']
         logging.warning('P3 uri: %s' % self.uri)                        
@@ -91,6 +92,11 @@ class P3RESTAPI():
         prepared_r = self.session.prepare_request(r)
         self.pretty_print_POST(prepared_r)
         r=self.session.send(prepared_r)
+
+        if not r.ok:
+            logging.warning('Connectin error on ACTION %s method [%s], Response status code: %d, reason: %s' % (action, http_method, r.status_code, r.reason))	
+            logging.debug('Connection error: %s' % r.text)
+            return None
         ret_data = json.loads(r.text)
 
         if 'Code' in ret_data:
@@ -121,7 +127,7 @@ class P3RESTAPI():
             user = username
 
         data['Username']=user
-        
+                           
         ret = self.CallAction('GetToken',data)
         logging.info("Username: %s" % data['Username'])
 
@@ -131,7 +137,6 @@ class P3RESTAPI():
       
     def GetDocument(self,id_doc, getfile=False, withsignature="0"):      
         data  = {"IdDocument": id_doc , "GetFile": getfile, "GetFileWithSignature" : withsignature}
-
         ret = self.CallAction('GetDocument',data)
         
         logging.info("IdDocument: %s" % data['IdDocument'])
@@ -147,10 +152,10 @@ class P3RESTAPI():
         ret = self.CallAction('GetFileDocumentById',data, http_method='GET')
         
         logging.info("IdDocument: %s" % data['IdDocument'])
-
+ 
         return(ret)
-            
     
+
     def EditDocument(self, document, register=None):
         if not register:
             register=self.config['P3']['default_register']
@@ -171,6 +176,21 @@ class P3RESTAPI():
                 'CodeRegister':register}
         
         ret = self.CallAction('CreateDocument',data,'PUT')
+        logging.info("IdDocument: %s" % data['Document']['Object'])        
+
+        return(ret)
+    
+    def CreateDocumentAndAddInProject(self, document, register=None, codeProject='1', classificationSchemeId=None):
+        if not register:
+            register=self.config['P3']['default_register']
+
+        
+        data = {'Document':document,
+                'CodeRegister':register,
+                'CodeProject':codeProject, 
+                'ClassificationSchemeId':classificationSchemeId}
+        
+        ret = self.CallAction('CreateDocumentAndAddInProject',data,'PUT')
         logging.info("IdDocument: %s" % data['Document']['Object'])        
 
         return(ret)
@@ -258,7 +278,11 @@ class P3RESTAPI():
     def GetActiveClassificationScheme(self):       
         data = {}
         ret = self.CallAction('GetActiveClassificationScheme',data,'GET')
+        return(ret)
 
+    def GetAllClassificationSchemes(self):       
+        data = {}
+        ret = self.CallAction('GetAllClassificationSchemes',data,'GET')
         return(ret)
 
     def GetProject(self,project):
@@ -268,21 +292,10 @@ class P3RESTAPI():
 
     def AddDocInProject(self,project):
         data = project
-
         ret = self.CallAction('AddDocInProject',data,'POST')
 #        logging.info("Receiver: %s" % data["Receiver"])
-
         return(ret)
 
-
-    def AddDocInProject(self,project):
-        data = project
-
-        ret = self.CallAction('AddDocInProject',data,'POST')
-#        logging.info("Receiver: %s" % data["Receiver"])
-
-        return(ret)
-    
 
     
         
@@ -297,33 +310,32 @@ if __name__=="__main__":
     
     test = [
 #        'getdocument',
-#        'getfiledocumentbyid',        
+#        'getfiledocumentbyid',
 #        'editdocument',
-#        'searchdocument'
+        'searchdocument'
 #        'createdocument',
 #        'getmodifieddocuments',
 #        'addcorrespondent',
 #        'getcorrespondent',        
-        'searchcorrespondent',
+#        'searchcorrespondent',
 #        'editcorrespondent',        
 #        'executetransmission',
 #        'getactiveclassificationscheme',
+#        'getallclassificationschemes',
 #        'adddocinproject',
 #        'getproject'
     ]        
 
     if 'getdocument' in test:
         #iddoc="79785989" # per il test
-        iddoc="230054419" #per produzione
-        
-        print(api.GetDocument(iddoc,True,"1"))
+        iddoc="230054419" #per produzione    
+        print(api.GetDocument(iddoc))
 
     if 'getfiledocumentbyid' in test:
         #iddoc="79785989" # per il test
-        iddoc="230054419" #per produzione
-        
+        iddoc="230054419" #per produzione    
         print(api.GetFileDocumentById(iddoc, signed=True))
-        
+
 
     if 'searchdocument' in test:                        
         filter = {'Name':'OBJECT','Value':'Oggetto'}
@@ -389,7 +401,7 @@ if __name__=="__main__":
         correspondent = {"Description": "string",
                          "Code": "codice20",
                          "Type": "U",
-#                         "CodeRegisterOrRF": "C_H330",
+                         "CodeRegisterOrRF": "C_H330",
                          "CorrespondentType": "P",
                          "PreferredChannel": "MAIL",
                          "Name": "Nome",
@@ -403,14 +415,14 @@ if __name__=="__main__":
         filters = [
                    {'Name':'OFFICES','Value':'TRUE'},
                    {'Name':'USERS','Value':'TRUE'},
-                   {'Name':'ROLES','Value':'FALSE'},
 #                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'COMMON_ADDRESSBOOK','Value':'FALSE'},
-                   {'Name':'TYPE','Value':'EXTERNAL'},
+                   {'Name':'TYPE','Value':'GLOBAL'},
 #                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
-#                   {'Name':'CODE','Value':'205648'},
+                   {'Name':'CODE','Value':'132313'},
+#                   {'Name':'CODE','Value':'PAT-RFS120'},
                    {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
-                   {'Name':'EXACT_CODE','Value':'A313388'}
+                   {'Name': 'COMMON_ADDRESSBOOK', 'Value':'TRUE'},
+#                   {'Name':'EXACT_CODE','Value':'codice18'}
                    ]
 
         # per ricercare direttamente dal codice rubrica esatto [{'Name':'EXACT_CODE','Value':corr['code']},        
@@ -421,12 +433,12 @@ if __name__=="__main__":
         filters = [
                    {'Name':'OFFICES','Value':'TRUE'},
                    {'Name':'USERS','Value':'TRUE'},
-                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'TYPE','Value':'EXTERNAL'},
+#                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
+                   {'Name':'TYPE','Value':'GLOBAL'},
 #                   {'Name':'DESCRIPTION','Value':'Cognome N'},
-#                   {'Name':'CODE','Value':'codice18'},
-                   {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
-                   {'Name':'EXACT_CODE','Value':'P205648'}
+                   {'Name':'CODE','Value':'codice18'},
+#                   {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
+#                   {'Name':'EXACT_CODE','Value':'codice18'}
                    ]
         
         result=api.SearchCorrespondents(filters)
@@ -435,10 +447,15 @@ if __name__=="__main__":
             quit()
         print(result['Correspondents'][0]['Id'])
 
-        correspondent=api.GetCorrespondent(result['Correspondents'][0]['Id'])
-        print(correspondent)
+#        correspondent=api.GetCorrespondent(result['Correspondents'][0]['Id'])
+#        print(correspondent)
 
-        correspondent['Name']="NuovoNome"
+        correspondent['Id']=result['Correspondents'][0]['Id']
+        correspondent['Code']=result['Correspondents'][0]['Code']
+        correspondent['CorrespondentType']=result['Correspondents'][0]['CorrespondentType']
+
+        correspondent['Name']="NuovoNomeOggi"
+        correspondent['Email']="miamail@pec.it"
         print(api.EditCorrespondent(correspondent))
 
 
@@ -456,6 +473,9 @@ if __name__=="__main__":
 
     if 'getactiveclassificationscheme' in test:                
         print(api.GetActiveClassificationScheme())
+
+    if 'getallclassificationschemes' in test:                
+        print(api.GetAllClassificationSchemes())
 
     if 'getproject' in test:                                
         project = {"ClassificationSchemeId": "79787618",
