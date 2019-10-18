@@ -112,7 +112,6 @@ class P3RESTAPI():
         
     def Authenticate(self, username = None):
         # di default imort rubrica cosi in caso di errore si puo cancellare e ricreare
-
         data = { 'CodeApplication': self.config['P3']['code_application'],
                  "CodeAdm":self.config['P3']['code_adm']}
         
@@ -131,7 +130,11 @@ class P3RESTAPI():
         ret = self.CallAction('GetToken',data)
         logging.info("Username: %s" % data['Username'])
 
+        if not ret:
+            logging.error('Authentication error')
+            return False 
         self.auth_token=ret['Token']
+        return True
 
         
       
@@ -301,7 +304,9 @@ class P3RESTAPI():
         
 if __name__=="__main__":
     api = P3RESTAPI()
-    api.Authenticate()
+    if not api.Authenticate():
+        logging.error("Error: Can't authenticate")
+        sys.exit(1)
 
     logger = logging.getLogger()
 
