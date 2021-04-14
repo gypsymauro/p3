@@ -14,6 +14,7 @@ import urllib.parse
 import logging
 import configparser
 
+# documentazione: http://pisrest-test.pitre.tn.it/RestServices/swagger/ui/index
 
 class P3RESTAPI():
     def __init__(self):
@@ -133,6 +134,10 @@ class P3RESTAPI():
         if not ret:
             logging.error('Authentication error')
             return False 
+        if 'Code' in ret and ret['Code']==1:
+            logging.error(ret['ErrorMessage'])
+            return False 
+
         self.auth_token=ret['Token']
         return True
 
@@ -163,11 +168,13 @@ class P3RESTAPI():
         if not register:
             register=self.config['P3']['default_register']
             
+        print(document)
         data = {'Document':document,
                 'CodeRegister':register}
         ret = self.CallAction('EditDocument',data,'POST')
         print(document)
         logging.info("IdDocument: %s" % document['Id'])
+        logging.info('Ret: %s' % ret)
         return(ret)
 
     def CreateDocument(self, document, register=None):
@@ -220,9 +227,12 @@ class P3RESTAPI():
 
         return(ret)
     
-    def SearchDocuments(self,filters):
+    def SearchDocuments(self,filters,register=None):
+        if not register:
+            register=self.config['P3']['default_register']
+
         data = {}
-        data['Filters']=[filters,]
+        data['Filters']=filters
 
         return(self.CallAction('SearchDocuments',data,'POST'))
 
@@ -293,10 +303,25 @@ class P3RESTAPI():
         ret = self.CallAction('GetProject',data,'GET')
         return(ret)
 
+    def SearchProjects(self,filters):
+        data = {}
+        data['Filters']=filters
+        ret = self.CallAction('SearchProjects',data,'POST')
+        return(ret)
+
     def AddDocInProject(self,project):
         data = project
         ret = self.CallAction('AddDocInProject',data,'POST')
 #        logging.info("Receiver: %s" % data["Receiver"])
+        return(ret)
+
+    def GetProjectsByDocument(self, id_doc, ruolo=None):
+        data = {}
+        data['IdDocument']=id_doc
+        ret = self.CallAction('GetProjectsByDocument',data,'GET')
+        if 'Code' in ret and ret['Code']==1 and ruolo:
+            data['CodeRoleLogin']=ruolo
+            ret = self.CallAction('GetProjectsByDocument',data,'GET')        
         return(ret)
 
 
@@ -328,12 +353,14 @@ if __name__=="__main__":
 #        'getactiveclassificationscheme',
 #        'getallclassificationschemes',
 #        'adddocinproject',
-#        'getproject'
+#        'getproject',
+#        'searchprojects',
+#        'getprojectsbydocument'
     ]        
 
     if 'getdocument' in test:
         #iddoc="79785989" # per il test
-        iddoc="230054419" #per produzione    
+        iddoc="276478578" #per produzione    
         print(api.GetDocument(iddoc))
 
     if 'getfiledocumentbyid' in test:
@@ -343,7 +370,13 @@ if __name__=="__main__":
 
 
     if 'searchdocument' in test:                        
-        filter = {'Name':'OBJECT','Value':'Oggetto'}
+#        filter = {'Name':'OBJECT','Value':'Oggetto'}
+        filter = [
+            {'Name':'YEAR','Value':'2019'},
+            {'Name':'IN_PROTOCOL','Value':'true'},
+            {'Name':'NUM_PROTOCOL_FROM','Value':'46872'},
+            {'Name':'NUM_PROTOCOL_TO','Value':'46872'}
+        ]
         print(api.SearchDocuments(filter))
 
     if 'editdocument' in test:
@@ -420,12 +453,16 @@ if __name__=="__main__":
         filters = [
                    {'Name':'OFFICES','Value':'TRUE'},
                    {'Name':'USERS','Value':'TRUE'},
+                   {'Name':'ROLES','Value':'FALSE'},
 #                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'TYPE','Value':'GLOBAL'},
+                    {'Name':'TYPE','Value':'EXTERNAL'},
+#                   {'Name':'TYPE','Value':'GLOBAL'},
 #                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
-                   {'Name':'CODE','Value':'132313'},
+#                   {'Name':'CODE','Value':'132313'},
 #                   {'Name':'CODE','Value':'PAT-RFS120'},
+                   {'Name': 'NATIONAL_IDENTIFICATION_NUMBER', 'Value':'CTTRRG57T13L378Z'},
                    {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
+#                   {'Name': 'COMMON_ADDRESSBOOK', 'Value':'FALSE'},
                    {'Name': 'COMMON_ADDRESSBOOK', 'Value':'TRUE'},
 #                   {'Name':'EXACT_CODE','Value':'codice18'}
                    ]
@@ -483,12 +520,21 @@ if __name__=="__main__":
         print(api.GetAllClassificationSchemes())
 
     if 'getproject' in test:                                
-        project = {"ClassificationSchemeId": "79787618",
-                   "CodeProject": "2.1"
+        project = {"ClassificationSchemeId": "221878115",
+                   "CodeProject": "1"
         }
 
         print(api.GetProject(project))
 
+    if 'searchprojects' in test:                                
+        filter = [
+            {'Name':'YEAR','Value':'2021'},
+#            {'Name':'PROJECT_CODE','Value':'1.1'},
+#            {'Name':'CLASSIFICATION_CODE','Value':'1'},
+#            {'Name':'PROJECT_DESCRIPTION','Value':'AFFARI'},
+
+        ]
+        print(api.SearchProjects(filter))
 
     if 'adddocinproject' in test:                                
         project = {
@@ -509,5 +555,18 @@ if __name__=="__main__":
         }
 
         print(api.AddDocInProject(project))
+        
+    if 'getprojectsbydocument' in test:
+        #iddoc="79785989" # per il test
+        api.Authenticate('inserire nome utente qui')
+        iddoc="283729292" #per produzione    
+        ruolo=21
+        projects=api.GetProjectsByDocument(iddoc, ruolo)
+        print(projects)
+        for project in projects['Projects']:
+            print(project['Code'])
+        api.Authenticate()
+
+
 
 
