@@ -339,7 +339,7 @@ if __name__=="__main__":
      
     
     test = [
-        'getdocument',
+#        'getdocument',
 #        'getfiledocumentbyid',
 #        'editdocument',
 #        'searchdocument'
@@ -354,7 +354,7 @@ if __name__=="__main__":
 #        'getallclassificationschemes',
 #        'adddocinproject',
 #        'getproject',
-#        'searchprojects',
+        'searchprojects',
 #        'getprojectsbydocument'
     ]        
 
@@ -455,15 +455,13 @@ if __name__=="__main__":
                    {'Name':'USERS','Value':'TRUE'},
                    {'Name':'ROLES','Value':'FALSE'},
 #                   {'Name':'REGISTRY_OR_RF','Value':'C_H330'},
-                   {'Name':'TYPE','Value':'GLOBAL'},
-#                   {'Name':'TYPE','Value':'EXTERNAL'},
+                   {'Name':'TYPE','Value':'EXTERNAL'},
 #                   {'Name':'DESCRIPTION','Value':'AGRARIA R'},
-                   {'Name':'CODE','Value':'132313'},
+#                   {'Name':'CODE','Value':'132313'},
 #                   {'Name':'CODE','Value':'PAT-RFS120'},
                    {'Name': 'NATIONAL_IDENTIFICATION_NUMBER', 'Value':'CTTRRG57T13L378Z'},
                    {'Name': 'EXTENDED_SEARCH_NO_REG', 'Value':'TRUE'},
-#                   {'Name': 'COMMON_ADDRESSBOOK', 'Value':'FALSE'},
-                   {'Name': 'COMMON_ADDRESSBOOK', 'Value':'TRUE'},
+                   {'Name': 'COMMON_ADDRESSBOOK', 'Value':'FALSE'},
 #                   {'Name':'EXACT_CODE','Value':'codice18'}
                    ]
 
@@ -520,8 +518,8 @@ if __name__=="__main__":
         print(api.GetAllClassificationSchemes())
 
     if 'getproject' in test:                                
-        project = {"ClassificationSchemeId": "79787618",
-                   "CodeProject": "2.1"
+        project = {"ClassificationSchemeId": "221878115",
+                   "CodeProject": "1"
         }
 
         print(api.GetProject(project))
@@ -543,7 +541,6 @@ if __name__=="__main__":
                    "CodeProject": "1"
 #                   "IdProject": "79787745"
         }
-
         print(api.AddDocInProject(project))
 
     if 'adddocinprojectcomplete' in test:     
@@ -558,7 +555,7 @@ if __name__=="__main__":
         
     if 'getprojectsbydocument' in test:
         #iddoc="79785989" # per il test
-        api.Authenticate('specificare il nome utente qui')
+        api.Authenticate('pivamichela')
         iddoc="283729292" #per produzione    
         ruolo=21
         projects=api.GetProjectsByDocument(iddoc, ruolo)
